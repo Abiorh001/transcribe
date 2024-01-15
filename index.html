@@ -1,4 +1,4 @@
-<html>
+<!-- <html>
   <head>
     <meta charset="UTF-8" />
     <title>Amazon Transcribe</title>
@@ -41,4 +41,125 @@
       <button class="button" onclick="clearTranscription()">Clear</button>
     </div>
   </body>
+</html> -->
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Amazon Transcribe</title>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f0f0f0;
+    }
+
+    #mainContainer {
+      max-width: 800px;
+      margin: 50px auto;
+      background-color: #fff;
+      padding: 20px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      border-radius: 5px;
+      text-align: center;
+    }
+
+    #textContainer {
+      margin-bottom: 20px;
+    }
+
+    #recordButtonContainer {
+      margin-bottom: 20px;
+    }
+
+    #recordSocket {
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      border: none;
+      background-color: #4caf50;
+      color: white;
+      border-radius: 5px;
+    }
+
+    #recordSocket.recordActive {
+      background-color: #f44336;
+    }
+
+    #headerText h2 {
+      margin-bottom: 10px;
+    }
+
+    #transcribedText {
+      min-height: 100px;
+      border: 1px solid #ccc;
+      padding: 10px;
+      background-color: #fff;
+      overflow: auto;
+    }
+
+    .button {
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      border: none;
+      background-color: #4285f4;
+      color: white;
+      border-radius: 5px;
+    }
+
+    .button:hover {
+      background-color: #357ae8;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="mainContainer">
+    <div id="textContainer">
+      <h1>Amazon Transcribe</h1>
+      <p>WebSocket Implementation:</p>
+      <ol>
+        Real Time implementation using AWS sockets
+      </ol>
+      <p>
+        To run the application click on start transcription and make sure you share the screen you want to capture the audio correctly.
+      </p>
+    </div>
+    <div id="recordButtonContainer">
+      <button id="recordSocket" class="recordInactive" onclick="onRecordSocketPress()">
+        Start Transcription
+      </button>
+    </div>
+
+    <div id="headerText">
+      <h2>Transcription</h2>
+    </div>
+    <div id="transcribedText"></div>
+    <button class="button" onclick="clearTranscription()">Clear</button>
+  </div>
+
+  <script defer type="text/javascript" src="./src/main.js"></script>
+  <script>
+    function onRecordSocketPress() {
+      const recordButton = document.getElementById("recordSocket");
+
+      if (recordButton.classList.contains("recordActive")) {
+        // Stop transcription
+        recordButton.textContent = "Start Transcription";
+        recordButton.classList.remove("recordActive");
+        stopRecording();
+      } else {
+        // Start transcription
+        recordButton.textContent = "Stop Transcription";
+        recordButton.classList.add("recordActive");
+        startRecording(updateTranscription);
+      }
+    }
+  </script>
+</body>
+
 </html>
