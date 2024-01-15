@@ -31,7 +31,6 @@ multidict==6.0.4
 numpy==1.26.3
 openai==1.5.0
 packaging==23.2
-PyAudio==0.2.14
 pycparser==2.21
 pydantic==2.5.2
 pydantic_core==2.14.5
