@@ -25,19 +25,6 @@
 //   return buffer;
 // };
 
-// const createMicrophoneStream = async () => {
-//   microphoneStream = new MicrophoneStream();
-//   microphoneStream.on("format", (data) => {
-//     inputSampleRate = data.sampleRate;
-//   });
-//   microphoneStream.setStream(
-//     await window.navigator.mediaDevices.getUserMedia({
-//       video: false,
-//       audio: true,
-//     })
-//   );
-// };
-
 // export const downsampleBuffer = (
 //   buffer,
 //   inputSampleRate = SAMPLE_RATE,
@@ -93,14 +80,45 @@
 
 //   if (raw == null) return;
 
-//   let downsampledBuffer = downsampleBuffer(raw, inputSampleRate, sampleRate);
-//   let pcmEncodedBuffer = pcmEncode(downsampledBuffer);
+//   // Adjust the buffer size to potentially decrease latency
+//   const bufferSize = 4096;
+//   let offset = 0;
 
-//   let audioEventMessage = getAudioEventMessage(Buffer.from(pcmEncodedBuffer));
+//   while (offset < raw.length) {
+//     const chunk = raw.slice(offset, offset + bufferSize);
+//     let downsampledBuffer = downsampleBuffer(chunk, inputSampleRate, sampleRate);
+//     let pcmEncodedBuffer = pcmEncode(downsampledBuffer);
+//     let audioEventMessage = getAudioEventMessage(new Uint8Array(pcmEncodedBuffer));
+//     let binary = eventStreamMarshaller.marshall(audioEventMessage);
 
-//   let binary = eventStreamMarshaller.marshall(audioEventMessage);
+//     socket.send(binary);
 
-//   return binary;
+//     offset += bufferSize;
+//   }
+// };
+
+// export const createMicrophoneStream = async () => {
+//   try {
+//     // Check for browser compatibility
+//     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+//       throw new Error("getUserMedia is not supported in this browser.");
+//     }
+
+//     microphoneStream = new MicrophoneStream();
+//     microphoneStream.on("format", (data) => {
+//       inputSampleRate = data.sampleRate;
+//     });
+
+//     // Use getDisplayMedia to capture audio from the current tab
+//     const mediaStream = await navigator.mediaDevices.getDisplayMedia({
+//       video: true,
+//       audio: true,
+//     });
+
+//     microphoneStream.setStream(mediaStream);
+//   } catch (error) {
+//     console.error("Error creating microphone stream:", error.message);
+//   }
 // };
 
 // export const startRecording = async (callback) => {
@@ -110,11 +128,10 @@
 
 //   try {
 //     const { data: presignedUrlData } = await axios.get(backendUrl);
-//     console.log("Presigned URL Data:", presignedUrlData);
 
 //     // Extract WebSocket URL from the provided JSON object
 //     const websocketUrl = presignedUrlData?.pre_signed_url;
-//     console.log("WebSocket URL:", websocketUrl);
+   
 
 //     // Check if the WebSocket URL is present
 //     if (!websocketUrl) {
@@ -128,8 +145,7 @@
 //     socket.onopen = function () {
 //       if (socket.readyState === socket.OPEN) {
 //         microphoneStream.on("data", function (rawAudioChunk) {
-//           let binary = convertAudioToBinaryMessage(rawAudioChunk);
-//           socket.send(binary);
+//           convertAudioToBinaryMessage(rawAudioChunk);
 //         });
 //       }
 //     };
@@ -141,7 +157,6 @@
 //         let results = messageBody.Transcript?.Results;
 //         if (results && results.length && !results[0]?.IsPartial) {
 //           const newTranscript = results[0].Alternatives[0].Transcript;
-//           console.log(newTranscript);
 //           transcript += newTranscript + " ";
 //           callback(transcript);
 //         }
@@ -157,7 +172,7 @@
 //       stopRecording();
 //     };
 
-//     createMicrophoneStream();
+//     await createMicrophoneStream(); // Make sure to await createMicrophoneStream
 //   } catch (error) {
 //     console.error("An error occurred while obtaining the presigned URL:", error.message);
 //     stopRecording();
@@ -174,11 +189,6 @@
 // };
 
 
-
-
-
-
-
 import MicrophoneStream from "microphone-stream";
 import { EventStreamMarshaller } from "@aws-sdk/eventstream-marshaller";
 import { fromUtf8, toUtf8 } from "@aws-sdk/util-utf8-node";
@@ -189,11 +199,13 @@ const backendUrl = "https://transcribe-backend-yd3k.onrender.com/aws-transcribe-
 
 let socket;
 let transcript = "";
+let timer;
 const SAMPLE_RATE = 44100;
 let inputSampleRate = undefined;
 let sampleRate = SAMPLE_RATE;
 let microphoneStream = undefined;
 const eventStreamMarshaller = new EventStreamMarshaller(toUtf8, fromUtf8);
+const pauseThreshold = 2000; // Adjust the pause threshold as needed (in milliseconds)
 
 export const pcmEncode = (input) => {
   var offset = 0;
@@ -309,11 +321,9 @@ export const startRecording = async (callback) => {
 
   try {
     const { data: presignedUrlData } = await axios.get(backendUrl);
-    console.log("Presigned URL Data:", presignedUrlData);
 
     // Extract WebSocket URL from the provided JSON object
     const websocketUrl = presignedUrlData?.pre_signed_url;
-    console.log("WebSocket URL:", websocketUrl);
 
     // Check if the WebSocket URL is present
     if (!websocketUrl) {
@@ -335,13 +345,24 @@ export const startRecording = async (callback) => {
     socket.onmessage = function (message) {
       let messageWrapper = eventStreamMarshaller.unmarshall(Buffer(message.data));
       let messageBody = JSON.parse(String.fromCharCode.apply(String, messageWrapper.body));
+
       if (messageWrapper.headers[":message-type"].value === "event") {
         let results = messageBody.Transcript?.Results;
+
         if (results && results.length && !results[0]?.IsPartial) {
           const newTranscript = results[0].Alternatives[0].Transcript;
-          console.log(newTranscript);
+
+          if (timer) {
+            clearTimeout(timer);
+          }
+
           transcript += newTranscript + " ";
           callback(transcript);
+
+          // Set a timer to clear the transcript after a pause
+          timer = setTimeout(() => {
+            transcript = "";
+          }, pauseThreshold);
         }
       }
     };

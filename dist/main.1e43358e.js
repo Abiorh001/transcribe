@@ -11365,18 +11365,6 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
 //   }
 //   return buffer;
 // };
-// const createMicrophoneStream = async () => {
-//   microphoneStream = new MicrophoneStream();
-//   microphoneStream.on("format", (data) => {
-//     inputSampleRate = data.sampleRate;
-//   });
-//   microphoneStream.setStream(
-//     await window.navigator.mediaDevices.getUserMedia({
-//       video: false,
-//       audio: true,
-//     })
-//   );
-// };
 // export const downsampleBuffer = (
 //   buffer,
 //   inputSampleRate = SAMPLE_RATE,
@@ -11422,11 +11410,38 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
 // const convertAudioToBinaryMessage = (audioChunk) => {
 //   let raw = MicrophoneStream.toRaw(audioChunk);
 //   if (raw == null) return;
-//   let downsampledBuffer = downsampleBuffer(raw, inputSampleRate, sampleRate);
-//   let pcmEncodedBuffer = pcmEncode(downsampledBuffer);
-//   let audioEventMessage = getAudioEventMessage(Buffer.from(pcmEncodedBuffer));
-//   let binary = eventStreamMarshaller.marshall(audioEventMessage);
-//   return binary;
+//   // Adjust the buffer size to potentially decrease latency
+//   const bufferSize = 4096;
+//   let offset = 0;
+//   while (offset < raw.length) {
+//     const chunk = raw.slice(offset, offset + bufferSize);
+//     let downsampledBuffer = downsampleBuffer(chunk, inputSampleRate, sampleRate);
+//     let pcmEncodedBuffer = pcmEncode(downsampledBuffer);
+//     let audioEventMessage = getAudioEventMessage(new Uint8Array(pcmEncodedBuffer));
+//     let binary = eventStreamMarshaller.marshall(audioEventMessage);
+//     socket.send(binary);
+//     offset += bufferSize;
+//   }
+// };
+// export const createMicrophoneStream = async () => {
+//   try {
+//     // Check for browser compatibility
+//     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+//       throw new Error("getUserMedia is not supported in this browser.");
+//     }
+//     microphoneStream = new MicrophoneStream();
+//     microphoneStream.on("format", (data) => {
+//       inputSampleRate = data.sampleRate;
+//     });
+//     // Use getDisplayMedia to capture audio from the current tab
+//     const mediaStream = await navigator.mediaDevices.getDisplayMedia({
+//       video: true,
+//       audio: true,
+//     });
+//     microphoneStream.setStream(mediaStream);
+//   } catch (error) {
+//     console.error("Error creating microphone stream:", error.message);
+//   }
 // };
 // export const startRecording = async (callback) => {
 //   if (microphoneStream) {
@@ -11434,10 +11449,8 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
 //   }
 //   try {
 //     const { data: presignedUrlData } = await axios.get(backendUrl);
-//     console.log("Presigned URL Data:", presignedUrlData);
 //     // Extract WebSocket URL from the provided JSON object
 //     const websocketUrl = presignedUrlData?.pre_signed_url;
-//     console.log("WebSocket URL:", websocketUrl);
 //     // Check if the WebSocket URL is present
 //     if (!websocketUrl) {
 //       throw new Error("WebSocket URL not found in the provided JSON object.");
@@ -11448,8 +11461,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
 //     socket.onopen = function () {
 //       if (socket.readyState === socket.OPEN) {
 //         microphoneStream.on("data", function (rawAudioChunk) {
-//           let binary = convertAudioToBinaryMessage(rawAudioChunk);
-//           socket.send(binary);
+//           convertAudioToBinaryMessage(rawAudioChunk);
 //         });
 //       }
 //     };
@@ -11460,7 +11472,6 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
 //         let results = messageBody.Transcript?.Results;
 //         if (results && results.length && !results[0]?.IsPartial) {
 //           const newTranscript = results[0].Alternatives[0].Transcript;
-//           console.log(newTranscript);
 //           transcript += newTranscript + " ";
 //           callback(transcript);
 //         }
@@ -11473,7 +11484,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
 //       console.log("WebSocket connection closed. Code:", event.code, "Reason:", event.reason);
 //       stopRecording();
 //     };
-//     createMicrophoneStream();
+//     await createMicrophoneStream(); // Make sure to await createMicrophoneStream
 //   } catch (error) {
 //     console.error("An error occurred while obtaining the presigned URL:", error.message);
 //     stopRecording();
@@ -11491,11 +11502,14 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
 var backendUrl = "https://transcribe-backend-yd3k.onrender.com/aws-transcribe-url";
 var socket;
 var transcript = "";
+var timer;
 var SAMPLE_RATE = 44100;
 var inputSampleRate = undefined;
 var sampleRate = SAMPLE_RATE;
 var microphoneStream = undefined;
 var eventStreamMarshaller = new _eventstreamMarshaller.EventStreamMarshaller(_utilUtf8Node.toUtf8, _utilUtf8Node.fromUtf8);
+var pauseThreshold = 2000; // Adjust the pause threshold as needed (in milliseconds)
+
 var pcmEncode = exports.pcmEncode = function pcmEncode(input) {
   var offset = 0;
   var buffer = new ArrayBuffer(input.length * 2);
@@ -11621,19 +11635,14 @@ var startRecording = exports.startRecording = /*#__PURE__*/function () {
         case 4:
           _yield$axios$get = _context2.sent;
           presignedUrlData = _yield$axios$get.data;
-          console.log("Presigned URL Data:", presignedUrlData);
-
           // Extract WebSocket URL from the provided JSON object
-          websocketUrl = presignedUrlData === null || presignedUrlData === void 0 ? void 0 : presignedUrlData.pre_signed_url;
-          console.log("WebSocket URL:", websocketUrl);
-
-          // Check if the WebSocket URL is present
+          websocketUrl = presignedUrlData === null || presignedUrlData === void 0 ? void 0 : presignedUrlData.pre_signed_url; // Check if the WebSocket URL is present
           if (websocketUrl) {
-            _context2.next = 11;
+            _context2.next = 9;
             break;
           }
           throw new Error("WebSocket URL not found in the provided JSON object.");
-        case 11:
+        case 9:
           socket = new WebSocket(websocketUrl);
           socket.binaryType = "arraybuffer";
           transcript = "";
@@ -11652,9 +11661,16 @@ var startRecording = exports.startRecording = /*#__PURE__*/function () {
               var results = (_messageBody$Transcri = messageBody.Transcript) === null || _messageBody$Transcri === void 0 ? void 0 : _messageBody$Transcri.Results;
               if (results && results.length && !((_results$ = results[0]) !== null && _results$ !== void 0 && _results$.IsPartial)) {
                 var newTranscript = results[0].Alternatives[0].Transcript;
-                console.log(newTranscript);
+                if (timer) {
+                  clearTimeout(timer);
+                }
                 transcript += newTranscript + " ";
                 callback(transcript);
+
+                // Set a timer to clear the transcript after a pause
+                timer = setTimeout(function () {
+                  transcript = "";
+                }, pauseThreshold);
               }
             }
           };
@@ -11665,21 +11681,21 @@ var startRecording = exports.startRecording = /*#__PURE__*/function () {
             console.log("WebSocket connection closed. Code:", event.code, "Reason:", event.reason);
             stopRecording();
           };
-          _context2.next = 20;
+          _context2.next = 18;
           return createMicrophoneStream();
-        case 20:
-          _context2.next = 26;
+        case 18:
+          _context2.next = 24;
           break;
-        case 22:
-          _context2.prev = 22;
+        case 20:
+          _context2.prev = 20;
           _context2.t0 = _context2["catch"](1);
           console.error("An error occurred while obtaining the presigned URL:", _context2.t0.message);
           stopRecording();
-        case 26:
+        case 24:
         case "end":
           return _context2.stop();
       }
-    }, _callee2, null, [[1, 22]]);
+    }, _callee2, null, [[1, 20]]);
   }));
   return function startRecording(_x) {
     return _ref2.apply(this, arguments);
@@ -11745,7 +11761,11 @@ var startRecording = /*#__PURE__*/function () {
   };
 }();
 var onTranscriptionDataReceived = function onTranscriptionDataReceived(data) {
-  transcribedText.insertAdjacentHTML("beforeend", data);
+  // Append the new data to the existing content
+  transcribedText.innerHTML += data;
+
+  // Scroll to the bottom to show the latest transcription
+  transcribedText.scrollTop = transcribedText.scrollHeight;
 };
 var stopRecording = function stopRecording() {
   recordButtonSocket.setAttribute("class", "recordInactive");
@@ -11779,7 +11799,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "0.0.0.0" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "53543" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "60821" + '/');
   ws.onmessage = function (event) {
     checkedAssets = {};
     assetsToAccept = [];

@@ -23,10 +23,16 @@ const startRecording = async (type) => {
     stopRecording();
   }
 };
-
 const onTranscriptionDataReceived = (data) => {
-  transcribedText.insertAdjacentHTML("beforeend", data);
+  // Append the new data to the existing content
+  transcribedText.innerHTML += data;
+
+  // Scroll to the bottom to show the latest transcription
+  transcribedText.scrollTop = transcribedText.scrollHeight;
 };
+
+
+
 
 const stopRecording = function () {
   recordButtonSocket.setAttribute("class", "recordInactive");
