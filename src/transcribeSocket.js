@@ -279,18 +279,27 @@ const convertAudioToBinaryMessage = (audioChunk) => {
 };
 
 export const createMicrophoneStream = async () => {
-  microphoneStream = new MicrophoneStream();
-  microphoneStream.on("format", (data) => {
-    inputSampleRate = data.sampleRate;
-  });
+  try {
+    // Check for browser compatibility
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      throw new Error("getUserMedia is not supported in this browser.");
+    }
 
-  // Use getDisplayMedia to capture audio from the current tab
-  microphoneStream.setStream(
-    await window.navigator.mediaDevices.getDisplayMedia({
-      video: true,  // Add this line to request video access (even though it won't be used)
+    microphoneStream = new MicrophoneStream();
+    microphoneStream.on("format", (data) => {
+      inputSampleRate = data.sampleRate;
+    });
+
+    // Use getDisplayMedia to capture audio from the current tab
+    const mediaStream = await navigator.mediaDevices.getDisplayMedia({
+      video: true,
       audio: true,
-    })
-  );
+    });
+
+    microphoneStream.setStream(mediaStream);
+  } catch (error) {
+    console.error("Error creating microphone stream:", error.message);
+  }
 };
 
 export const startRecording = async (callback) => {

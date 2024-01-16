@@ -11565,30 +11565,42 @@ var convertAudioToBinaryMessage = function convertAudioToBinaryMessage(audioChun
 };
 var createMicrophoneStream = exports.createMicrophoneStream = /*#__PURE__*/function () {
   var _ref = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee() {
+    var mediaStream;
     return _regeneratorRuntime().wrap(function _callee$(_context) {
       while (1) switch (_context.prev = _context.next) {
         case 0:
+          _context.prev = 0;
+          if (!(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia)) {
+            _context.next = 3;
+            break;
+          }
+          throw new Error("getUserMedia is not supported in this browser.");
+        case 3:
           microphoneStream = new _microphoneStream.default();
           microphoneStream.on("format", function (data) {
             inputSampleRate = data.sampleRate;
           });
 
           // Use getDisplayMedia to capture audio from the current tab
-          _context.t0 = microphoneStream;
-          _context.next = 5;
-          return window.navigator.mediaDevices.getDisplayMedia({
+          _context.next = 7;
+          return navigator.mediaDevices.getDisplayMedia({
             video: true,
-            // Add this line to request video access (even though it won't be used)
             audio: true
           });
-        case 5:
-          _context.t1 = _context.sent;
-          _context.t0.setStream.call(_context.t0, _context.t1);
         case 7:
+          mediaStream = _context.sent;
+          microphoneStream.setStream(mediaStream);
+          _context.next = 14;
+          break;
+        case 11:
+          _context.prev = 11;
+          _context.t0 = _context["catch"](0);
+          console.error("Error creating microphone stream:", _context.t0.message);
+        case 14:
         case "end":
           return _context.stop();
       }
-    }, _callee);
+    }, _callee, null, [[0, 11]]);
   }));
   return function createMicrophoneStream() {
     return _ref.apply(this, arguments);
@@ -11767,7 +11779,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "0.0.0.0" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "54245" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "50242" + '/');
   ws.onmessage = function (event) {
     checkedAssets = {};
     assetsToAccept = [];
