@@ -3,22 +3,36 @@
 
 <head>
   <meta charset="UTF-8">
-  <title>Amazon Transcribe</title>
+  <title>Interview AI</title>
   <style>body {
       font-family: 'Arial', sans-serif;
       margin: 0;
       padding: 0;
-      background-color: #f0f0f0;
+      background-color: #1a1a1a;
+      color: #fff;
     }
 
     #mainContainer {
+      display: flex;
       max-width: 800px;
       margin: 50px auto;
-      background-color: #fff;
-      padding: 20px;
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      background-color: #333;
+      box-shadow: 0 0 10px rgba(255, 223, 0, 0.1);
       border-radius: 5px;
-      text-align: center;
+      overflow: hidden;
+    }
+
+    #transcribeContainer,
+    #responseContainer {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
+
+    #transcribeContainer {
+      border-right: 1px solid #555;
     }
 
     #textContainer {
@@ -35,7 +49,7 @@
       cursor: pointer;
       border: none;
       background-color: #4caf50;
-      color: white;
+      color: #fff;
       border-radius: 5px;
     }
 
@@ -43,16 +57,19 @@
       background-color: #f44336;
     }
 
-    #headerText h2 {
-      margin-bottom: 10px;
+    #headerText {
+      margin-bottom: 20px;
     }
 
-    #transcribedText {
+    #transcribedText,
+    #responseText {
       min-height: 100px;
-      border: 1px solid #ccc;
+      border: 1px solid #555;
       padding: 10px;
-      background-color: #fff;
+      background-color: #1a1a1a;
       overflow: auto;
+      flex: 1;
+      width: 100%;
     }
 
     .button {
@@ -61,7 +78,7 @@
       cursor: pointer;
       border: none;
       background-color: #4285f4;
-      color: white;
+      color: #fff;
       border-radius: 5px;
     }
 
@@ -72,31 +89,71 @@
 
 <body>
   <div id="mainContainer">
-    <div id="textContainer">
-      <h1>Amazon Transcribe</h1>
-      <p>WebSocket Implementation:</p>
-      <ol>
-        Real-Time implementation using AWS sockets
-      </ol>
-      <p>
-        To run the application, click on "Start Transcription," and make sure you share the screen you want to capture the audio correctly.
-      </p>
+    <div id="transcribeContainer">
+      <div id="textContainer">
+        <h1>Interview AI - Transcribe</h1>
+        <p>Real-Time implementation using AWS sockets and ChatGpt-Model4, generate quick answers for your Interview. Made by @Abiorh.</p>
+        <p>To run the application, click on "Start Transcription," and make sure you share the screen you want to capture the audio correctly.</p>
+      </div>
+      <div id="recordButtonContainer">
+        <button id="recordSocket" class="recordInactive" onclick="onRecordSocketPress()">Start Transcription</button>
+      </div>
+      <div id="headerText">
+        <h2>Transcription</h2>
+      </div>
+      <div id="transcribedText"></div>
+      <button class="button" onclick="stopRecording()">Stop Transcription</button>
     </div>
-    <div id="recordButtonContainer">
-      <button id="recordSocket" class="recordInactive" onclick="onRecordSocketPress()">
-        Start Transcription
-      </button>
+    <div id="responseContainer">
+      <div id="textContainer">
+        <h1>Interview AI - Responses</h1>
+        <!-- Add any additional content for responses -->
+      </div>
+      <div id="headerText">
+        <h2>Responses</h2>
+      </div>
+      <div id="responseText"></div>
     </div>
-
-    <div id="headerText">
-      <h2>Transcription</h2>
-    </div>
-    <div id="transcribedText"></div>
-    <button class="button" onclick="clearTranscription()">Clear</button>
   </div>
 
   <script defer="" type="text/javascript" src="/main.1e43358e.js"></script>
-  <script>function onRecordSocketPress() {
+  <script>var recordButtonSocket = document.getElementById("recordSocket");
+var transcribedText = document.getElementById("transcribedText");
+var responseText = document.getElementById("responseText");
+function startRecording(type) {
+  window.clearTranscription();
+  try {
+    if (type === "socket") {
+      // Replace with your actual implementation of TranscribeSocket.startRecording
+      // TranscribeSocket.startRecording(onTranscriptionDataReceived);
+      console.log("Start recording...");
+    }
+  } catch (error) {
+    alert("An error occurred while recording: " + error.message);
+    stopRecording();
+  }
+}
+function stopRecording() {
+  // Replace with your actual implementation of TranscribeSocket.stopRecording
+  // TranscribeSocket.stopRecording();
+  console.log("Stop recording...");
+  recordButtonSocket.setAttribute("class", "recordInactive");
+}
+function updateTranscription(data) {
+  // Implement the updateTranscription function if not already defined
+  transcribedText.innerHTML += data;
+  transcribedText.scrollTop = transcribedText.scrollHeight;
+  sendDataToBackend(data);
+}
+function sendDataToBackend(data) {
+  try {
+    // Replace with your actual implementation of sending data to the backend
+    console.log("Sending data to backend:", data);
+  } catch (error) {
+    console.error("Error sending/receiving data:", error);
+  }
+}
+function onRecordSocketPress() {
   var recordButton = document.getElementById("recordSocket");
   if (recordButton.classList.contains("recordActive")) {
     // Stop transcription
@@ -107,9 +164,12 @@
     // Start transcription
     recordButton.textContent = "Stop Transcription";
     recordButton.classList.add("recordActive");
-    startRecording(updateTranscription);
+    startRecording("socket");
   }
-}</script>
+}
+window.clearTranscription = function () {
+  transcribedText.innerHTML = "";
+};</script>
 </body>
 
 </html>

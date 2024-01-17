@@ -11499,7 +11499,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
 //   }
 // };
 // UPDATE THIS ACCORDING TO YOUR BACKEND:
-var backendUrl = "https://transcribe-backend-yd3k.onrender.com/aws-transcribe-url";
+var backendUrl = "http://127.0.0.1:8000/aws-transcribe-url";
 var socket;
 var transcript = "";
 var timer;
@@ -11721,52 +11721,141 @@ function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) { try
 function _asyncToGenerator(fn) { return function () { var self = this, args = arguments; return new Promise(function (resolve, reject) { var gen = fn.apply(self, args); function _next(value) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value); } function _throw(err) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err); } _next(undefined); }); }; }
 var recordButtonSocket = document.getElementById("recordSocket");
 var transcribedText = document.getElementById("transcribedText");
-window.onRecordSocketPress = function () {
-  if (recordButtonSocket.getAttribute("class") === "recordInactive") {
-    startRecording("socket");
-  } else {
-    stopRecording();
-  }
-};
-var startRecording = /*#__PURE__*/function () {
-  var _ref = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee(type) {
-    return _regeneratorRuntime().wrap(function _callee$(_context) {
-      while (1) switch (_context.prev = _context.next) {
-        case 0:
-          window.clearTranscription();
-          _context.prev = 1;
-          if (!(type === "socket")) {
-            _context.next = 6;
-            break;
-          }
-          recordButtonSocket.setAttribute("class", "recordActive");
-          _context.next = 6;
-          return TranscribeSocket.startRecording(onTranscriptionDataReceived);
-        case 6:
+var responseText = document.getElementById("responseText");
+window.onRecordSocketPress = /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee() {
+  return _regeneratorRuntime().wrap(function _callee$(_context) {
+    while (1) switch (_context.prev = _context.next) {
+      case 0:
+        if (!(recordButtonSocket.getAttribute("class") === "recordInactive")) {
           _context.next = 12;
           break;
-        case 8:
-          _context.prev = 8;
-          _context.t0 = _context["catch"](1);
-          alert("An error occurred while recording: " + _context.t0.message);
+        }
+        _context.prev = 1;
+        recordButtonSocket.setAttribute("class", "recordActive");
+        _context.next = 5;
+        return startRecording("socket");
+      case 5:
+        _context.next = 10;
+        break;
+      case 7:
+        _context.prev = 7;
+        _context.t0 = _context["catch"](1);
+        alert("An error occurred while starting recording: " + _context.t0.message);
+      case 10:
+        _context.next = 13;
+        break;
+      case 12:
+        // Stop recording
+        stopRecording();
+      case 13:
+      case "end":
+        return _context.stop();
+    }
+  }, _callee, null, [[1, 7]]);
+}));
+var startRecording = /*#__PURE__*/function () {
+  var _ref2 = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee2(type) {
+    return _regeneratorRuntime().wrap(function _callee2$(_context2) {
+      while (1) switch (_context2.prev = _context2.next) {
+        case 0:
+          window.clearTranscription();
+          _context2.prev = 1;
+          if (!(type === "socket")) {
+            _context2.next = 5;
+            break;
+          }
+          _context2.next = 5;
+          return TranscribeSocket.startRecording(onTranscriptionDataReceived);
+        case 5:
+          _context2.next = 11;
+          break;
+        case 7:
+          _context2.prev = 7;
+          _context2.t0 = _context2["catch"](1);
+          alert("An error occurred while recording: " + _context2.t0.message);
           stopRecording();
-        case 12:
+        case 11:
         case "end":
-          return _context.stop();
+          return _context2.stop();
       }
-    }, _callee, null, [[1, 8]]);
+    }, _callee2, null, [[1, 7]]);
   }));
   return function startRecording(_x) {
-    return _ref.apply(this, arguments);
+    return _ref2.apply(this, arguments);
   };
 }();
-var onTranscriptionDataReceived = function onTranscriptionDataReceived(data) {
-  // Append the new data to the existing content
-  transcribedText.innerHTML += data;
+var onTranscriptionDataReceived = /*#__PURE__*/function () {
+  var _ref3 = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee3(data) {
+    return _regeneratorRuntime().wrap(function _callee3$(_context3) {
+      while (1) switch (_context3.prev = _context3.next) {
+        case 0:
+          // Append the new data to the existing content
+          transcribedText.innerHTML += data;
 
-  // Scroll to the bottom to show the latest transcription
-  transcribedText.scrollTop = transcribedText.scrollHeight;
-};
+          // Scroll to the bottom to show the latest transcription
+          transcribedText.scrollTop = transcribedText.scrollHeight;
+
+          // Send the data to the backend for processing immediately
+          sendDataToBackend(data);
+        case 3:
+        case "end":
+          return _context3.stop();
+      }
+    }, _callee3);
+  }));
+  return function onTranscriptionDataReceived(_x2) {
+    return _ref3.apply(this, arguments);
+  };
+}();
+var sendDataToBackend = /*#__PURE__*/function () {
+  var _ref4 = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee4(data) {
+    var response, responseData;
+    return _regeneratorRuntime().wrap(function _callee4$(_context4) {
+      while (1) switch (_context4.prev = _context4.next) {
+        case 0:
+          _context4.prev = 0;
+          _context4.next = 3;
+          return fetch("http://127.0.0.1:8000/receive_data", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              resume: "General Resume context",
+              job: "General job context",
+              transcription: data
+            })
+          });
+        case 3:
+          response = _context4.sent;
+          if (response.ok) {
+            _context4.next = 6;
+            break;
+          }
+          throw new Error("HTTP error! Status: ".concat(response.status));
+        case 6:
+          _context4.next = 8;
+          return response.json();
+        case 8:
+          responseData = _context4.sent;
+          responseText.innerHTML += responseData.response + "<br>";
+          responseText.scrollTop = responseText.scrollHeight;
+          _context4.next = 16;
+          break;
+        case 13:
+          _context4.prev = 13;
+          _context4.t0 = _context4["catch"](0);
+          console.error("Error sending/receiving data:", _context4.t0);
+        case 16:
+        case "end":
+          return _context4.stop();
+      }
+    }, _callee4, null, [[0, 13]]);
+  }));
+  return function sendDataToBackend(_x3) {
+    return _ref4.apply(this, arguments);
+  };
+}();
 var stopRecording = function stopRecording() {
   recordButtonSocket.setAttribute("class", "recordInactive");
   TranscribeSocket.stopRecording();
@@ -11799,7 +11888,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "0.0.0.0" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "60821" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "53328" + '/');
   ws.onmessage = function (event) {
     checkedAssets = {};
     assetsToAccept = [];

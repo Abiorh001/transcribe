@@ -195,7 +195,7 @@ import { fromUtf8, toUtf8 } from "@aws-sdk/util-utf8-node";
 import axios from "axios";
 
 // UPDATE THIS ACCORDING TO YOUR BACKEND:
-const backendUrl = "https://transcribe-backend-yd3k.onrender.com/aws-transcribe-url";
+const backendUrl = "http://127.0.0.1:8000/aws-transcribe-url";
 
 let socket;
 let transcript = "";
