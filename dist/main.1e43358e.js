@@ -11821,8 +11821,8 @@ var sendDataToBackend = /*#__PURE__*/function () {
               "Content-Type": "application/json"
             },
             body: JSON.stringify({
-              resume: "General Resume context",
-              job: "General job context",
+              resume: "one year experience i have in my resume",
+              job: "software engineer entry level",
               transcription: data
             })
           });
@@ -11888,7 +11888,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "0.0.0.0" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "53328" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "54209" + '/');
   ws.onmessage = function (event) {
     checkedAssets = {};
     assetsToAccept = [];
